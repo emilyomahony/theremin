@@ -2,8 +2,8 @@
 
 #include "GPIO.h"
 
+// configure joystick right push to change scale
 void EXTI_Init(void) {
-	// configure joystick right push to change scale
 	
 	// enable clock
 	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
@@ -32,6 +32,7 @@ void EXTI_Init(void) {
 	
 }
 
+// update scale based on button push & current scale
 void EXTI2_IRQHandler(void) {
 	// clear pending bit
 	EXTI->PR1 |= EXTI_PR1_PIF2;

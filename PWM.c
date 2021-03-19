@@ -2,8 +2,17 @@
 
 #include "PWM.h"
 
+uint32_t volatile currentValue1 = 0;
+uint32_t volatile lastValue1 = 0;
+uint32_t volatile overflowCount1 = 0;
+uint32_t volatile fallingEdge1 = 0;
 
+uint32_t volatile currentValue2 = 0;
+uint32_t volatile lastValue2 = 0;
+uint32_t volatile overflowCount2 = 0;
+uint32_t volatile fallingEdge2 = 0;
 
+// initialize data capture from sensors
 void Input_Capture_Setup(void) {
 	// PA0 & PA1 setup
 	// enable clock
@@ -67,6 +76,7 @@ void Input_Capture_Setup(void) {
 	NVIC_SetPriority(TIM5_IRQn, 2);
 }
 
+// track overflows, update volume / frequency based on sensor input
 void TIM5_IRQHandler(void) {
 	if (TIM5->SR & TIM_SR_UIF) {
 		// an overflow has occurred
@@ -107,6 +117,7 @@ void TIM5_IRQHandler(void) {
 	}	
 }
 
+// initialize periodic trigger sensor pulse to receive data
 void Trigger_Setup(void) {
 	// PE11 setup
 	// enable clock

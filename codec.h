@@ -28,9 +28,7 @@
 #define	CS43L22_REG_SPEAKER_A_VOL			0x24
 #define	CS43L22_REG_SPEAKER_B_VOL			0x25
 #define	CS43L22_REG_LIMIT_CTL1				0x27
-
-#define	CS43L22_REG_TEMPMONITOR_CTL	0x32
-
+#define	CS43L22_REG_TEMPMONITOR_CTL		0x32
 
 #define ADDR 0x94
 
@@ -39,8 +37,6 @@ void codec_init(void);
 void codec_play(void);
 
 void codec_volume(int volume);
-
-void codec_beep(void);
 
 int codec_send(uint16_t *audio_left, uint16_t *audio_right, uint16_t buf_size);
 

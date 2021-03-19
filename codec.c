@@ -4,6 +4,7 @@
 #include "LCD.h"
 #include <stdio.h>
 
+// helpful for checking if we're communicating with the sound chip
 void codec_id(int msg) {
 	uint8_t send = CS43L22_REG_ID;
 	I2C_SendData(I2C1, ADDR, &send, 1);
@@ -20,6 +21,7 @@ void codec_id(int msg) {
 	for (int d = 0; d < 500000; d++);
 }
 
+// CS43L22 startup sequence (from datasheet)
 void codec_startup(void) {
 	// init GPIO reset pin PE3
 	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOEEN;
@@ -55,6 +57,7 @@ void codec_startup(void) {
 	I2C_SendData(I2C1, ADDR, data, 2);
 }
 
+// set up GPIO pins for SAI function
 void SAI_GPIO_init(void) {
 	// configure SAI GPIO
 	// PE2 = MCK, PE5 = SCK, PE6 = SD, PE4 = FS
@@ -114,6 +117,7 @@ void SAI_GPIO_init(void) {
 	
 }
 
+// initialize SAI for I2S
 void SAI_init(void) {
 	// enable clock
 	RCC->APB2ENR |= RCC_APB2ENR_SAI1EN;
@@ -185,6 +189,7 @@ void SAI_init(void) {
 	SAI1_Block_A->CR1 |= SAI_xCR1_SAIEN;
 }
 
+// configure sound chip 
 void codec_init(void) {
 	// boot code
 	codec_startup();
@@ -240,6 +245,7 @@ void codec_init(void) {
 	I2C_SendData(I2C1, ADDR, data, 2);
 }
 
+// enable sound chip 
 void codec_play(void) {
 	uint8_t data [2];
 	// enable digital soft ramp
@@ -259,6 +265,7 @@ void codec_play(void) {
 
 }
 
+// change volume
 void codec_volume(int volume){
 	if (volume > 60) volume = 60;
 	uint8_t convertedvol = (((volume) > 100)? 100:((uint8_t)(((volume) * 255) / 100)));
@@ -294,47 +301,8 @@ void codec_volume(int volume){
 	I2C_SendData(I2C1,ADDR,data,2);
 }
 
-void codec_beep(void){
-	
-	
-	unsigned char sound_data[2];
-	// MSTxVOL	p51
-	// PCMxVOL	p47
-	// unmute, set volume to middle 
-	sound_data[0]=CS43L22_REG_PCMA_VOL;	
-	sound_data[1]=0x00;
-	I2C_SendData(I2C1,ADDR,sound_data,2);
-
-	// unmute, set volume to middle 
-	sound_data[0]=CS43L22_REG_PCMB_VOL;		
-	sound_data[1]=0x00;
-	I2C_SendData(I2C1,ADDR,sound_data,2);
-
-	// OFFTIME	p48
-	// BPVOL	p49
-	// beep volume and off time 
-	// regular volume, off 1.2s 
-	sound_data[0]=CS43L22_REG_BEEP_VOL_OFF_TIME;		
-	sound_data[1]=(0x0<<5)|(0);
-	I2C_SendData(I2C1,ADDR,sound_data,2);
-
-	// ONTIME	p48
-	// FREQ		p47
-	sound_data[0]=CS43L22_REG_BEEP_FREQ_ON_TIME;	
-	// 1kHz, on 1.2s 
-	sound_data[1]=(0x7<<4)|(0x3);
-	I2C_SendData(I2C1,ADDR,sound_data,2);
-
-
-	// BEEP		p49
-	// BEEPMIXDIS	p49
-	sound_data[0]=CS43L22_REG_BEEP_TONE_CFG;	
-	sound_data[1]=(0x3<<6)|(0x0);
-	I2C_SendData(I2C1,ADDR,sound_data,2);
-	
-	
-}
-
+// function for manually sending I2S data to sound chip
+// not necessary since we use DMA to transmit data 
 int codec_send(uint16_t *audio_left, uint16_t *audio_right, uint16_t buf_size) {
 
 	uint32_t count=buf_size;
@@ -345,7 +313,7 @@ int codec_send(uint16_t *audio_left, uint16_t *audio_right, uint16_t buf_size) {
 
 	if ((audio_left==0) || (audio_right==0) || (buf_size==0)) return 0;
 
-	// Iif not enabled, fill FIFO and enable 
+	// if not enabled, fill FIFO and enable 
 	if ((SAI1_Block_A->CR1 & SAI_xCR1_SAIEN)==0) {
 		while (((SAI1_Block_A->SR & SAI_xSR_FLVL) != (SAI_xSR_FLVL_0 | SAI_xSR_FLVL_2))
 			&& (count > 0U)) {
